@@ -1,32 +1,49 @@
-require("dotenv").config();
-const express = require("express");
+const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
+require('dotenv').config();
 
-// Update CORS to allow your frontend domain (we'll update this after deploying frontend)
+// Import routes
+const authRoutes = require('./routes/auth');
+const postRoutes = require('./routes/posts');
+const commentRoutes = require('./routes/comments');
+
+// Initialize Express app FIRST
+const app = express();
+
+// Middleware - AFTER app is created
+app.use(express.json());
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://*.vercel.app'],
+  origin: [
+    'http://localhost:3000',
+    'https://hidden-gems-final.vercel.app',
+    'https://*.vercel.app'
+  ],
   credentials: true
 }));
 
-const connectDB = require("./config/db");
-
-const app = express();
-const PORT = process.env.PORT || 3001;
-
-app.use(express.json());
-app.use(cors());
-
 // Connect to MongoDB
-connectDB();
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/hiddengems')
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
-// Basic route
-app.get("/", (req, res) => {
-  res.send("API Running");
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/posts', postRoutes);
+app.use('/api/comments', commentRoutes);
+
+// Root route
+app.get('/', (req, res) => {
+  res.json({ message: 'Hidden Gems API is running!' });
 });
 
-// User, post, and comment routes (to be implemented in next step)
-app.use("/api/auth", require("./routes/auth"));
-app.use("/api/posts", require("./routes/posts"));
-app.use("/api/comments", require("./routes/comments"));
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK' });
+});
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
