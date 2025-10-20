@@ -1,7 +1,5 @@
 import axios from 'axios';
 
-import axios from 'axios';
-
 // Use environment variable or default to local
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -9,6 +7,7 @@ const api = axios.create({
   baseURL: API_URL,
 });
 
+// Add token to requests
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('token');
@@ -19,12 +18,14 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Auth API
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
   getMe: () => api.get('/auth/me'),
 };
 
+// Post API
 export const postAPI = {
   getAll: () => api.get('/posts'),
   create: (data) => api.post('/posts', data),
@@ -34,6 +35,7 @@ export const postAPI = {
   getByUser: () => api.get('/posts/user/me'),
 };
 
+// Comment API
 export const commentAPI = {
   getByPostId: (postId) => api.get(`/comments/${postId}`),
   create: (postId, data) => api.post(`/comments/${postId}`, data),
