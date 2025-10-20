@@ -1,0 +1,25 @@
+folders:
+  - src
+  - src/app
+  - src/app/login
+  - src/app/register
+  - src/app/create-post
+  - src/app/post
+  - src/app/post/[id]
+  - src/components
+  - src/services
+  - src/context
+
+files:
+  - src/app/page.js
+  - src/app/layout.js
+  - src/app/globals.css
+  - src/app/login/page.js
+  - src/app/register/page.js
+  - src/app/create-post/page.js
+  - src/app/post/[id]/page.js
+  - src/components/Navbar.js
+  - src/components/PostCard.js
+  - src/components/CommentList.js
+  - src/services/api.js
+  - src/context/AuthContext.js

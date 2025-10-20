@@ -1,0 +1,20 @@
+folders:
+  - src
+  - src/config
+  - src/models
+  - src/middleware
+  - src/routes
+
+files:
+  - src/config/db.js
+  - src/models/User.js
+  - src/models/Post.js
+  - src/models/Comment.js
+  - src/middleware/authMiddleware.js
+  - src/middleware/contentModeration.js
+  - src/routes/auth.js
+  - src/routes/posts.js
+  - src/routes/comments.js
+  - src/server.js
+  - .env
+  - package.json
