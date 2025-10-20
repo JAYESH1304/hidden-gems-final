@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    turbo: {}
-  },
-  // Disable static page generation for dynamic auth pages
+  turbopack: {},
   output: 'standalone',
 }
 
