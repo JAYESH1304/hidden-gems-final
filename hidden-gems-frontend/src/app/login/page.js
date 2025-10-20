@@ -68,7 +68,7 @@ export default function Login() {
         </form>
 
         <p style={styles.footer}>
-          Don't have an account? <a href="/register" style={styles.link}>Register here</a>
+          Don&apos;t have an account? <a href="/register" style={styles.link}>Register here</a>
         </p>
       </div>
     </div>

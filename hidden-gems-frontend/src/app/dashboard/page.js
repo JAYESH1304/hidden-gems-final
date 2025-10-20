@@ -77,7 +77,7 @@ export default function Dashboard() {
         {posts.length === 0 ? (
           <div style={styles.emptyState}>
             <p style={styles.emptyIcon}>📝</p>
-            <p style={styles.emptyText}>You haven't created any posts yet.</p>
+            <p style={styles.emptyText}>You haven&apos;t created any posts yet.</p>
             <Link href="/create-post" style={styles.emptyBtn}>Create Your First Post</Link>
           </div>
         ) : (
