@@ -11,18 +11,18 @@ const commentRoutes = require('./routes/comments');
 // Initialize Express app
 const app = express();
 
-// Middleware - MUST come before routes!
-app.use(express.json()); // Parse JSON bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+// CRITICAL: JSON parser MUST come before CORS
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// CORS - Add your Vercel URL
+// Simple CORS - allow all origins for now (we'll restrict later)
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://hidden-gems-final-jayeshs-projects-7dc0e6d8.vercel.app', // Your actual Vercel URL
-    'https://*.vercel.app'
-  ],
-  credentials: true
+  origin: true, // Allow all origins temporarily
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 
 // Connect to MongoDB
@@ -30,7 +30,7 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// Routes - AFTER middleware
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/comments', commentRoutes);
