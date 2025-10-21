@@ -11,12 +11,12 @@ const commentRoutes = require('./routes/comments');
 // Initialize Express app FIRST
 const app = express();
 
-// Middleware - AFTER app is created
+// CORS - UPDATE THIS SECTION
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://stunning-syrniki-f9caa0.netlify.app', // Your Netlify URL
-    'https://*.netlify.app'
+    'https://hidden-gems-final.vercel.app',  // Replace with YOUR actual Vercel URL
+    'https://*.vercel.app'  // Allows all Vercel preview deployments
   ],
   credentials: true
 }));
