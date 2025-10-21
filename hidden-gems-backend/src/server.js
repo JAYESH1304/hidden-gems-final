@@ -8,26 +8,29 @@ const authRoutes = require('./routes/auth');
 const postRoutes = require('./routes/posts');
 const commentRoutes = require('./routes/comments');
 
-// Initialize Express app FIRST
+// Initialize Express app
 const app = express();
 
-// CORS - UPDATE THIS SECTION
+// Middleware - MUST come before routes!
+app.use(express.json()); // Parse JSON bodies
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+
+// CORS - Add your Vercel URL
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://hidden-gems-final.vercel.app',  // Replace with YOUR actual Vercel URL
-    'https://*.vercel.app'  // Allows all Vercel preview deployments
+    'https://hidden-gems-final-jayeshs-projects-7dc0e6d8.vercel.app', // Your actual Vercel URL
+    'https://*.vercel.app'
   ],
   credentials: true
 }));
 
-
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/hiddengems')
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// Routes
+// Routes - AFTER middleware
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/comments', commentRoutes);
