@@ -12,15 +12,15 @@ const commentRoutes = require('./routes/comments');
 const app = express();
 
 // Middleware - AFTER app is created
-app.use(express.json());
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://hidden-gems-final.vercel.app',
-    'https://*.vercel.app'
+    'https://stunning-syrniki-f9caa0.netlify.app', // Your Netlify URL
+    'https://*.netlify.app'
   ],
   credentials: true
 }));
+
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/hiddengems')
