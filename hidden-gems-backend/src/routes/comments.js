@@ -1,63 +1,73 @@
 const express = require('express');
+const router = express.Router();
 const Comment = require('../models/Comment');
 const Post = require('../models/Post');
-const authMiddleware = require('../middleware/authMiddleware');
-const contentModeration = require('../middleware/contentModeration');
+const auth = require('../middleware/auth');
 
-const router = express.Router();
+// Get comments for a post (public)
+router.get('/:postId', async (req, res) => {
+  try {
+    const comments = await Comment.find({ post: req.params.postId })
+      .populate('user', 'username')
+      .sort({ createdAt: -1 });
+    res.json(comments);
+  } catch (error) {
+    console.error('Get comments error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
-// Post a comment on a post (POST /api/comments/:postId)
-router.post('/:postId', authMiddleware, contentModeration, async (req, res) => {
+// Add comment (protected)
+router.post('/:postId', auth, async (req, res) => {
   try {
     const { content } = req.body;
-    const { postId } = req.params;
 
-    // Check that the post exists
-    const post = await Post.findById(postId);
+    if (!content) {
+      return res.status(400).json({ message: 'Comment content is required' });
+    }
+
+    // Check if post exists
+    const post = await Post.findById(req.params.postId);
     if (!post) {
-      return res.status(404).json({ msg: 'Post not found' });
+      return res.status(404).json({ message: 'Post not found' });
     }
 
     const comment = new Comment({
-      postId,
-      authorId: req.user.id,
       content,
+      user: req.userId,
+      post: req.params.postId
     });
 
     await comment.save();
-    res.status(201).json({ msg: "Comment saved", comment });
-  } catch (err) {
-    res.status(500).json({ msg: 'Server error', error: err.message });
+    await comment.populate('user', 'username');
+    
+    res.status(201).json(comment);
+  } catch (error) {
+    console.error('Create comment error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Get all comments for a post (GET /api/comments/:postId)
-router.get('/:postId', async (req, res) => {
+// Delete comment (protected - only comment owner)
+router.delete('/:commentId', auth, async (req, res) => {
   try {
-    const { postId } = req.params;
-    const comments = await Comment.find({ postId }).populate('authorId', 'username');
-    res.json(comments);
-  } catch (err) {
-    res.status(500).json({ msg: 'Server error', error: err.message });
+    const comment = await Comment.findById(req.params.commentId);
+    
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found' });
+    }
+
+    // Check if user owns the comment
+    if (comment.user.toString() !== req.userId) {
+      return res.status(403).json({ message: 'You are not authorized to delete this comment' });
+    }
+
+    await Comment.findByIdAndDelete(req.params.commentId);
+    res.json({ message: 'Comment deleted successfully' });
+  } catch (error) {
+    console.error('Delete comment error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
-
-// DELETE /api/comments/:commentId
-router.delete('/:commentId', authMiddleware, async (req, res) => {
-    try {
-      const comment = await Comment.findById(req.params.commentId);
-      if (!comment) return res.status(404).json({ msg: 'Comment not found' });
-  
-      // Only author or admin can delete
-      if (comment.authorId.toString() !== req.user.id && req.user.role !== 'admin') {
-        return res.status(403).json({ msg: 'Not authorized to delete this comment' });
-      }
-      await Comment.findByIdAndDelete(req.params.commentId);
-      res.json({ msg: 'Comment deleted' });
-    } catch (err) {
-      res.status(500).json({ msg: 'Server error', error: err.message });
-    }
-  });
-  
 
 module.exports = router;
