@@ -13,7 +13,6 @@ export default function PostDetail() {
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    // Get current user from token
     const token = localStorage.getItem('token');
     if (token) {
       try {
@@ -78,86 +77,169 @@ export default function PostDetail() {
     }
   };
 
-  if (loading) return <div className="container mx-auto p-8">Loading...</div>;
-  if (!post) return <div className="container mx-auto p-8">Post not found</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 flex items-center justify-center">
+        <div className="text-white text-2xl">Loading...</div>
+      </div>
+    );
+  }
 
-  // Check if current user is the post author
+  if (!post) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 flex items-center justify-center">
+        <div className="text-white text-2xl">Post not found</div>
+      </div>
+    );
+  }
+
   const isAuthor = currentUser && post.user && currentUser.userId === post.user._id;
 
   return (
-    <div className="container mx-auto p-8 max-w-4xl">
-      <div className="bg-white rounded-lg shadow-lg p-8">
-        <div className="flex justify-between items-start mb-6">
-          <h1 className="text-4xl font-bold">{post.title}</h1>
-          {isAuthor && (
-            <div className="space-x-2">
-              <button
-                onClick={handleEdit}
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-              >
-                Edit
-              </button>
-              <button
-                onClick={handleDelete}
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-              >
-                Delete
-              </button>
+    <div className="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 py-12 px-4">
+      <div className="container mx-auto max-w-4xl">
+        {/* Main Post Card */}
+        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden mb-8">
+          {/* Header Section */}
+          <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-8 text-white">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <h1 className="text-4xl md:text-5xl font-bold mb-4">{post.title}</h1>
+                <div className="flex items-center space-x-4 text-sm">
+                  <span className="bg-white bg-opacity-20 px-3 py-1 rounded-full capitalize">
+                    {post.type}
+                  </span>
+                  {post.user?.username && (
+                    <span>by {post.user.username}</span>
+                  )}
+                </div>
+              </div>
+              
+              {isAuthor && (
+                <div className="flex space-x-2">
+                  <button
+                    onClick={handleEdit}
+                    className="bg-white text-purple-600 px-4 py-2 rounded-lg hover:bg-purple-50 transition font-medium"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition font-medium"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Details Grid */}
+          <div className="p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              {post.genre && (
+                <div className="flex items-start">
+                  <span className="font-bold text-gray-700 w-32">Genre:</span>
+                  <span className="text-gray-600">{post.genre}</span>
+                </div>
+              )}
+              
+              {post.country && (
+                <div className="flex items-start">
+                  <span className="font-bold text-gray-700 w-32">Country:</span>
+                  <span className="text-gray-600">{post.country}</span>
+                </div>
+              )}
+              
+              {post.language && (
+                <div className="flex items-start">
+                  <span className="font-bold text-gray-700 w-32">Language:</span>
+                  <span className="text-gray-600">{post.language}</span>
+                </div>
+              )}
+              
+              {post.year && (
+                <div className="flex items-start">
+                  <span className="font-bold text-gray-700 w-32">Year:</span>
+                  <span className="text-gray-600">{post.year}</span>
+                </div>
+              )}
+              
+              {post.rating > 0 && (
+                <div className="flex items-start md:col-span-2">
+                  <span className="font-bold text-gray-700 w-32">Rating:</span>
+                  <span className="text-2xl">{'⭐'.repeat(post.rating)}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Description */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Description</h2>
+              <p className="text-gray-700 text-lg leading-relaxed">{post.description}</p>
+            </div>
+
+            {/* Review */}
+            {post.review && (
+              <div className="bg-purple-50 p-6 rounded-xl">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">Review</h2>
+                <p className="text-gray-700 text-lg leading-relaxed">{post.review}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Comments Section */}
+        <div className="bg-white rounded-2xl shadow-2xl p-8">
+          <h2 className="text-3xl font-bold text-gray-800 mb-6">Comments</h2>
+
+          {comments.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">
+              No comments yet. Be the first to comment!
+            </p>
+          ) : (
+            <div className="space-y-4 mb-8">
+              {comments.map((comment) => (
+                <div
+                  key={comment._id}
+                  className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-xl border-l-4 border-purple-500"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-bold text-purple-700">
+                      {comment.user?.username || 'Anonymous'}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      {new Date(comment.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                  <p className="text-gray-700 leading-relaxed">{comment.content}</p>
+                </div>
+              ))}
             </div>
           )}
+
+          {/* Comment Form */}
+          <form onSubmit={handleCommentSubmit} className="space-y-4">
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Write a comment..."
+              className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition resize-none"
+              rows="4"
+              required
+            />
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-xl hover:from-purple-700 hover:to-blue-700 transition font-bold text-lg shadow-lg"
+            >
+              Post Comment
+            </button>
+          </form>
         </div>
-
-        <div className="space-y-2 mb-6">
-          <p><strong>Type:</strong> {post.type}</p>
-          {post.genre && <p><strong>Genre:</strong> {post.genre}</p>}
-          {post.country && <p><strong>Country:</strong> {post.country}</p>}
-          {post.language && <p><strong>Language:</strong> {post.language}</p>}
-          {post.year && <p><strong>Year:</strong> {post.year}</p>}
-          {post.rating > 0 && (
-            <p>
-              <strong>Rating:</strong> {'⭐'.repeat(post.rating)}
-            </p>
-          )}
-          <p><strong>Description:</strong> {post.description}</p>
-          {post.review && <p><strong>Review:</strong> {post.review}</p>}
-        </div>
-
-        <hr className="my-8" />
-
-        <h2 className="text-2xl font-bold mb-4">Comments</h2>
-
-        {comments.length === 0 ? (
-          <p className="text-gray-500 mb-6">No comments yet. Be the first to comment!</p>
-        ) : (
-          <div className="space-y-4 mb-6">
-            {comments.map((comment) => (
-              <div key={comment._id} className="bg-gray-50 p-4 rounded">
-                <p className="font-semibold">{comment.user?.username || 'Anonymous'}</p>
-                <p>{comment.content}</p>
-                <p className="text-sm text-gray-500 mt-2">
-                  {new Date(comment.createdAt).toLocaleString()}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <form onSubmit={handleCommentSubmit} className="space-y-4">
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Write a comment..."
-            className="w-full p-4 border rounded-lg"
-            rows="3"
-            required
-          />
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 w-full"
-          >
-            Post Comment
-          </button>
-        </form>
       </div>
     </div>
   );
