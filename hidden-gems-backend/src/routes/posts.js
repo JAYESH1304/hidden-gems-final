@@ -40,15 +40,15 @@ router.post('/', auth, async (req, res) => {
 
     // Validate required fields
     if (!title || !type || !description) {
-      return res.status(400).json({ message: 'Please provide all required fields' });
+      return res.status(400).json({ message: 'Please provide title, type, and description' });
     }
 
     const post = new Post({
       title,
       type,
-      genre,
+      genre: genre || '',  // Optional
       description,
-      rating,
+      rating: rating || 0,  // Optional, default to 0
       user: req.userId
     });
 
@@ -58,7 +58,7 @@ router.post('/', auth, async (req, res) => {
     res.status(201).json(post);
   } catch (error) {
     console.error('Create post error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
