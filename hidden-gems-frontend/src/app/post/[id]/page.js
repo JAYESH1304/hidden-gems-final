@@ -1,95 +1,164 @@
 'use client';
-import React, { useEffect, useState, useContext } from 'react';
-import { useParams } from 'next/navigation';
-import { postAPI, commentAPI } from '../../../services/api';
-import { AuthContext } from '../../../providers/AuthProvider';
-import CommentList from '../../../components/CommentList';
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { postAPI, commentAPI } from '@/services/api';
 
 export default function PostDetail() {
+  const router = useRouter();
   const params = useParams();
-  const id = params.id;
-  const context = useContext(AuthContext);
-  const user = context?.user || null;
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
-  const [commentText, setCommentText] = useState('');
+  const [newComment, setNewComment] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    if (id) {
-      postAPI.getById(id).then(res => setPost(res.data)).catch(err => console.error(err));
-      commentAPI.getByPostId(id).then(res => setComments(res.data)).catch(err => console.error(err));
+    // Get current user from token
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setCurrentUser({ userId: payload.userId });
+      } catch (err) {
+        console.error('Error parsing token:', err);
+      }
     }
-  }, [id]);
+
+    fetchPost();
+    fetchComments();
+  }, [params.id]);
+
+  const fetchPost = async () => {
+    try {
+      const response = await postAPI.getById(params.id);
+      setPost(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching post:', error);
+      setLoading(false);
+    }
+  };
+
+  const fetchComments = async () => {
+    try {
+      const response = await commentAPI.getByPostId(params.id);
+      setComments(response.data);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    }
+  };
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
-    if (!user) {
-      alert('Please login to comment');
-      return;
-    }
+    if (!newComment.trim()) return;
+
     try {
-      const res = await commentAPI.create(id, { content: commentText });
-      setComments([...comments, res.data.comment]);
-      setCommentText('');
-      alert('Comment posted successfully!');
-    } catch (err) {
-      alert(err.response?.data?.msg || 'Failed to post comment');
+      await commentAPI.create(params.id, { content: newComment });
+      setNewComment('');
+      fetchComments();
+    } catch (error) {
+      console.error('Error posting comment:', error);
+      alert('Failed to post comment. Please try again.');
     }
   };
 
-  const handleDeleteComment = async (commentId) => {
-    try {
-      await commentAPI.delete(commentId);
-      setComments(comments.filter(c => c._id !== commentId));
-      alert('Comment deleted');
-    } catch (err) {
-      alert(err.response?.data?.msg || 'Failed to delete comment');
+  const handleEdit = () => {
+    router.push(`/edit-post/${params.id}`);
+  };
+
+  const handleDelete = async () => {
+    if (window.confirm('Are you sure you want to delete this post?')) {
+      try {
+        await postAPI.delete(params.id);
+        router.push('/dashboard');
+      } catch (error) {
+        console.error('Error deleting post:', error);
+        alert('Failed to delete post');
+      }
     }
   };
 
-  if (!post) return <div style={styles.loading}>Loading...</div>;
+  if (loading) return <div className="container mx-auto p-8">Loading...</div>;
+  if (!post) return <div className="container mx-auto p-8">Post not found</div>;
+
+  // Check if current user is the post author
+  const isAuthor = currentUser && post.user && currentUser.userId === post.user._id;
 
   return (
-    <div style={styles.container}>
-      <h1>{post.title}</h1>
-      <p><strong>Type:</strong> {post.type} | <strong>Genre:</strong> {post.genre}</p>
-      <p><strong>Country:</strong> {post.country} | <strong>Language:</strong> {post.language} | <strong>Year:</strong> {post.year}</p>
-      <p><strong>Rating:</strong> {'⭐'.repeat(post.rating)}</p>
-      <p><strong>Description:</strong> {post.description}</p>
-      <p><strong>Review:</strong> {post.review}</p>
-      {post.externalLink && (
-        <p><a href={post.externalLink} target="_blank" rel="noopener noreferrer" style={styles.link}>View on External Site</a></p>
-      )}
+    <div className="container mx-auto p-8 max-w-4xl">
+      <div className="bg-white rounded-lg shadow-lg p-8">
+        <div className="flex justify-between items-start mb-6">
+          <h1 className="text-4xl font-bold">{post.title}</h1>
+          {isAuthor && (
+            <div className="space-x-2">
+              <button
+                onClick={handleEdit}
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              >
+                Edit
+              </button>
+              <button
+                onClick={handleDelete}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
 
-      <hr style={styles.divider} />
+        <div className="space-y-2 mb-6">
+          <p><strong>Type:</strong> {post.type}</p>
+          {post.genre && <p><strong>Genre:</strong> {post.genre}</p>}
+          {post.country && <p><strong>Country:</strong> {post.country}</p>}
+          {post.language && <p><strong>Language:</strong> {post.language}</p>}
+          {post.year && <p><strong>Year:</strong> {post.year}</p>}
+          {post.rating > 0 && (
+            <p>
+              <strong>Rating:</strong> {'⭐'.repeat(post.rating)}
+            </p>
+          )}
+          <p><strong>Description:</strong> {post.description}</p>
+          {post.review && <p><strong>Review:</strong> {post.review}</p>}
+        </div>
 
-      <h2>Comments</h2>
-      <CommentList comments={comments} onDelete={handleDeleteComment} currentUser={user} />
+        <hr className="my-8" />
 
-      {user ? (
-        <form onSubmit={handleCommentSubmit} style={styles.form}>
+        <h2 className="text-2xl font-bold mb-4">Comments</h2>
+
+        {comments.length === 0 ? (
+          <p className="text-gray-500 mb-6">No comments yet. Be the first to comment!</p>
+        ) : (
+          <div className="space-y-4 mb-6">
+            {comments.map((comment) => (
+              <div key={comment._id} className="bg-gray-50 p-4 rounded">
+                <p className="font-semibold">{comment.user?.username || 'Anonymous'}</p>
+                <p>{comment.content}</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  {new Date(comment.createdAt).toLocaleString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <form onSubmit={handleCommentSubmit} className="space-y-4">
           <textarea
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
             placeholder="Write a comment..."
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
+            className="w-full p-4 border rounded-lg"
+            rows="3"
             required
-            style={styles.textarea}
           />
-          <button type="submit" style={styles.button}>Post Comment</button>
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 w-full"
+          >
+            Post Comment
+          </button>
         </form>
-      ) : (
-        <p>Please <a href="/login">login</a> to post a comment.</p>
-      )}
+      </div>
     </div>
   );
 }
-
-const styles = {
-  container: { maxWidth: '800px', margin: '2rem auto', padding: '2rem', background: 'rgba(255,255,255,0.95)', borderRadius: '12px' },
-  loading: { textAlign: 'center', marginTop: '2rem', fontSize: '1.2rem' },
-  link: { color: '#007bff', textDecoration: 'underline' },
-  divider: { margin: '2rem 0' },
-  form: { marginTop: '2rem', display: 'flex', flexDirection: 'column' },
-  textarea: { padding: '0.7rem', fontSize: '1rem', minHeight: '80px', border: '1px solid #ddd', borderRadius: '8px' },
-  button: { marginTop: '1rem', padding: '0.7rem', cursor: 'pointer', fontSize: '1rem', background: '#007bff', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold' },
-};
