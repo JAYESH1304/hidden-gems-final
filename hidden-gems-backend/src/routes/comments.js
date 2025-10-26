@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Comment = require('../models/Comment');
 const Post = require('../models/Post');
-const auth = require('../middleware/auth');
+const auth = require('../middleware/auth');  // Make sure this line exists
 
 // Get comments for a post (public)
 router.get('/:postId', async (req, res) => {
@@ -44,7 +44,7 @@ router.post('/:postId', auth, async (req, res) => {
     res.status(201).json(comment);
   } catch (error) {
     console.error('Create comment error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 

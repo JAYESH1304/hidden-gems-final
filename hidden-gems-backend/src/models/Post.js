@@ -12,19 +12,41 @@ const postSchema = new mongoose.Schema({
   },
   genre: {
     type: String,
-    required: false
+    required: true,
+    default: ''
   },
-  description: {  // Changed from 'review' to 'description'
+  country: {
+    type: String,
+    required: false,
+    default: ''
+  },
+  language: {
+    type: String,
+    required: true,
+    default: ''
+  },
+  year: {
+    type: String,
+    required: true,
+    default: ''
+  },
+  description: {
     type: String,
     required: true
+  },
+  review: {
+    type: String,
+    required: false,
+    default: ''
   },
   rating: {
     type: Number,
     min: 1,
     max: 5,
-    required: false
+    required: true,
+    default: 0
   },
-  user: {  // Added this field - it was missing!
+  user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true

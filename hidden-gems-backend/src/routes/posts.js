@@ -36,7 +36,7 @@ router.get('/:id', async (req, res) => {
 // Create post (protected)
 router.post('/', auth, async (req, res) => {
   try {
-    const { title, type, genre, description, rating } = req.body;
+    const { title, type, genre, country, language, year, description, review, rating } = req.body;
 
     // Validate required fields
     if (!title || !type || !description) {
@@ -46,9 +46,13 @@ router.post('/', auth, async (req, res) => {
     const post = new Post({
       title,
       type,
-      genre: genre || '',  // Optional
+      genre: genre || '',
+      country: country || '',
+      language: language || '',
+      year: year || '',
       description,
-      rating: rating || 0,  // Optional, default to 0
+      review: review || '',
+      rating: rating || 0,
       user: req.userId
     });
 
@@ -62,7 +66,7 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// Update post (protected - only post owner)
+// Update post route
 router.put('/:id', auth, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -76,14 +80,18 @@ router.put('/:id', auth, async (req, res) => {
       return res.status(403).json({ message: 'You are not authorized to edit this post' });
     }
 
-    const { title, type, genre, description, rating } = req.body;
+    const { title, type, genre, country, language, year, description, review, rating } = req.body;
 
     // Update fields
     post.title = title || post.title;
     post.type = type || post.type;
-    post.genre = genre || post.genre;
+    post.genre = genre !== undefined ? genre : post.genre;
+    post.country = country !== undefined ? country : post.country;
+    post.language = language !== undefined ? language : post.language;
+    post.year = year !== undefined ? year : post.year;
     post.description = description || post.description;
-    post.rating = rating || post.rating;
+    post.review = review !== undefined ? review : post.review;
+    post.rating = rating !== undefined ? rating : post.rating;
 
     await post.save();
     await post.populate('user', 'username');
@@ -94,6 +102,7 @@ router.put('/:id', auth, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 // Delete post (protected - only post owner)
 router.delete('/:id', auth, async (req, res) => {
