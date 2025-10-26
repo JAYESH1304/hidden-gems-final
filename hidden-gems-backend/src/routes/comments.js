@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Comment = require('../models/Comment');
 const Post = require('../models/Post');
-const auth = require('../middleware/auth');  // Make sure this line exists
+const auth = require('../middleware/auth');
 
 // Get comments for a post (public)
 router.get('/:postId', async (req, res) => {
@@ -13,7 +13,7 @@ router.get('/:postId', async (req, res) => {
     res.json(comments);
   } catch (error) {
     console.error('Get comments error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
@@ -22,7 +22,7 @@ router.post('/:postId', auth, async (req, res) => {
   try {
     const { content } = req.body;
 
-    if (!content) {
+    if (!content || content.trim() === '') {
       return res.status(400).json({ message: 'Comment content is required' });
     }
 
@@ -33,15 +33,18 @@ router.post('/:postId', auth, async (req, res) => {
     }
 
     const comment = new Comment({
-      content,
+      content: content.trim(),
       user: req.userId,
       post: req.params.postId
     });
 
     await comment.save();
-    await comment.populate('user', 'username');
     
-    res.status(201).json(comment);
+    // Fetch the saved comment with user populated
+    const populatedComment = await Comment.findById(comment._id)
+      .populate('user', 'username');
+    
+    res.status(201).json(populatedComment);
   } catch (error) {
     console.error('Create comment error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
