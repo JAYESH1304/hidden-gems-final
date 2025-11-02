@@ -1,17 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { authAPI } from '@/services/api';
 
 export default function Login() {
-  const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,25 +26,109 @@ export default function Login() {
 
     try {
       const response = await authAPI.login(formData);
-      console.log('Login successful');
       
-      // Store token
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('loggedInUser', formData.email);
       
-      console.log('Redirecting to dashboard...');
+      setSuccess(true);
+      setLoading(false);
       
-      // Try multiple redirect methods
+      // Also try auto-redirect
       setTimeout(() => {
-        window.location.replace('/dashboard');
-      }, 100);
+        window.location.href = '/dashboard';
+      }, 1000);
       
     } catch (err) {
-      console.error('Login error:', err);
       setError(err.response?.data?.message || 'Login failed. Please try again.');
       setLoading(false);
     }
   };
+
+  if (success) {
+    return (
+      <div className="login-page">
+        <div className="overlay"></div>
+        <div className="login-container">
+          <div className="success-icon">✅</div>
+          <h2>Login Successful!</h2>
+          <p className="tagline">Redirecting to dashboard...</p>
+          <Link href="/dashboard">
+            <button className="dashboard-btn">Go to Dashboard</button>
+          </Link>
+        </div>
+        <style jsx>{`
+          @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+          .login-page {
+            position: fixed;
+            inset: 0;
+            background: url('/background.jpeg') no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-family: 'Poppins', sans-serif;
+          }
+
+          .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 0;
+          }
+
+          .login-container {
+            position: relative;
+            z-index: 1;
+            background: rgb(38, 37, 37);
+            padding: 40px;
+            border-radius: 25px;
+            text-align: center;
+            width: 300px;
+            box-shadow: 0 0 30px rgba(245, 166, 35, 0.3);
+          }
+
+          .success-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+          }
+
+          h2 {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #4caf50;
+            font-size: 24px;
+          }
+
+          .tagline {
+            font-size: 14px;
+            color: #ccc;
+            margin-bottom: 25px;
+          }
+
+          .dashboard-btn {
+            width: 100%;
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+          }
+
+          .dashboard-btn:hover {
+            background-color: #66bb6a;
+            transform: scale(1.05);
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <div className="login-page">
