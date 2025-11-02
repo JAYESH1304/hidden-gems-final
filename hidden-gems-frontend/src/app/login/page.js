@@ -26,12 +26,20 @@ export default function Login() {
 
     try {
       const response = await authAPI.login(formData);
+      console.log('Login response:', response.data);
+      
+      // Store token
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('loggedInUser', formData.email);
-      router.push('/dashboard');
+      
+      console.log('Token saved, redirecting to dashboard...');
+      
+      // Force redirect using window.location as backup
+      window.location.href = '/dashboard';
+      
     } catch (err) {
+      console.error('Login error:', err);
       setError(err.response?.data?.message || 'Login failed. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
