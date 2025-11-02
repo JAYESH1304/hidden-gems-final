@@ -1,147 +1,347 @@
-
 'use client';
-export const dynamic = 'force-dynamic';
 
-import React, { useState, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { postAPI } from '../../services/api';
-import { AuthContext } from '../../providers/AuthProvider';
+import { postAPI } from '@/services/api';
 
 export default function CreatePost() {
-  const context = useContext(AuthContext);
-  const user = context?.user;
   const router = useRouter();
-  const [form, setForm] = useState({
+  const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [rating, setRating] = useState(2.5);
+  const [formData, setFormData] = useState({
     title: '',
+    type: '',
+    genre: '',
     description: '',
     review: '',
-    type: 'music',
-    genre: '',
     country: '',
     language: '',
     year: '',
-    rating: 5,
-    externalLink: '',
+    watchLink: '',
   });
+
+  useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+    }
+  }, [router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!user) {
-      alert('Please login to create a post');
-      router.push('/login');
-      return;
-    }
+    setError('');
+    setLoading(true);
+
     try {
-      await postAPI.create(form);
-      alert('Post created successfully!');
-      router.push('/');
+      await postAPI.create({
+        title: formData.title,
+        type: formData.type.toLowerCase(),
+        genre: formData.genre,
+        description: formData.description,
+        review: formData.review,
+        country: formData.country,
+        language: formData.language,
+        year: formData.year,
+        rating: rating,
+      });
+
+      alert('✅ Post created successfully!');
+      router.push('/dashboard');
     } catch (err) {
-      alert(err.response?.data?.msg || 'Failed to create post');
+      setError(err.response?.data?.message || 'Failed to create post');
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
   return (
-    <div style={styles.container}>
-      <h2 style={styles.title}>Create New Post</h2>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <input
-          type="text"
-          placeholder="Title"
-          value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
-          required
-          style={styles.input}
-        />
-        
-        <select
-          value={form.type}
-          onChange={(e) => setForm({ ...form, type: e.target.value })}
-          style={styles.input}
+    <div className="create-post-page">
+      {!showForm && (
+        <button
+          onClick={() => {
+            setShowForm(true);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className="create-post-btn"
         >
-          <option value="music">Music</option>
-          <option value="movie">Movie</option>
-        </select>
+          🎬 Create New Post
+        </button>
+      )}
 
-        <input
-          type="text"
-          placeholder="Genre (e.g., indie, thriller)"
-          value={form.genre}
-          onChange={(e) => setForm({ ...form, genre: e.target.value })}
-          style={styles.input}
-        />
+      {showForm && (
+        <div className="create-post">
+          <h2>Create a New Post</h2>
 
-        <textarea
-          placeholder="Description"
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-          style={styles.textarea}
-        />
+          {error && <div className="error-message">{error}</div>}
 
-        <textarea
-          placeholder="Review"
-          value={form.review}
-          onChange={(e) => setForm({ ...form, review: e.target.value })}
-          required
-          style={styles.textarea}
-        />
+          <form onSubmit={handleSubmit}>
+            <input
+              type="text"
+              name="title"
+              placeholder="Enter Title"
+              value={formData.title}
+              onChange={handleChange}
+              required
+            />
 
-        <input
-          type="text"
-          placeholder="Country"
-          value={form.country}
-          onChange={(e) => setForm({ ...form, country: e.target.value })}
-          style={styles.input}
-        />
+            <select
+              name="type"
+              value={formData.type}
+              onChange={handleChange}
+              required
+            >
+              <option value="" disabled>Select Category</option>
+              <option value="music">Music</option>
+              <option value="movie">Movie</option>
+            </select>
 
-        <input
-          type="text"
-          placeholder="Language"
-          value={form.language}
-          onChange={(e) => setForm({ ...form, language: e.target.value })}
-          style={styles.input}
-        />
+            <input
+              type="text"
+              name="genre"
+              placeholder="Genre (e.g. Action, Drama)"
+              value={formData.genre}
+              onChange={handleChange}
+              required
+            />
 
-        <input
-          type="number"
-          placeholder="Year"
-          value={form.year}
-          onChange={(e) => setForm({ ...form, year: e.target.value })}
-          style={styles.input}
-        />
+            <textarea
+              name="description"
+              rows="4"
+              placeholder="Short Description"
+              value={formData.description}
+              onChange={handleChange}
+              required
+            />
 
-        <label style={styles.label}>
-          Rating: {form.rating}
-          <input
-            type="range"
-            min="1"
-            max="5"
-            value={form.rating}
-            onChange={(e) => setForm({ ...form, rating: e.target.value })}
-            style={styles.slider}
-          />
-        </label>
+            <textarea
+              name="review"
+              rows="6"
+              placeholder="Write your Review..."
+              value={formData.review}
+              onChange={handleChange}
+              required
+            />
 
-        <input
-          type="url"
-          placeholder="External Link (Spotify, YouTube, IMDb)"
-          value={form.externalLink}
-          onChange={(e) => setForm({ ...form, externalLink: e.target.value })}
-          style={styles.input}
-        />
+            <input
+              type="text"
+              name="country"
+              placeholder="Country"
+              value={formData.country}
+              onChange={handleChange}
+            />
 
-        <button type="submit" style={styles.button}>Create Post</button>
-      </form>
+            <input
+              type="text"
+              name="language"
+              placeholder="Language"
+              value={formData.language}
+              onChange={handleChange}
+            />
+
+            <input
+              type="text"
+              name="year"
+              placeholder="Release Year"
+              value={formData.year}
+              onChange={handleChange}
+            />
+
+            <label className="rating-label">
+              Rating: <span id="ratingValue">{rating.toFixed(1)}</span>
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="5"
+              step="0.5"
+              className="slider"
+              value={rating}
+              onChange={(e) => setRating(parseFloat(e.target.value))}
+            />
+
+            <button type="submit" disabled={loading}>
+              {loading ? 'Submitting...' : 'Submit Post'}
+            </button>
+          </form>
+        </div>
+      )}
+
+      <style jsx>{`
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+        .create-post-page {
+          margin: 0;
+          padding: 0;
+          font-family: 'Poppins', sans-serif;
+          background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+          color: #e0f7fa;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: flex-start;
+          min-height: 100vh;
+        }
+
+        .create-post-btn {
+          margin-top: 40px;
+          background: #0b7ff2;
+          color: #fff;
+          border: none;
+          padding: 14px 28px;
+          font-size: 1.1rem;
+          border-radius: 10px;
+          cursor: pointer;
+          font-weight: 600;
+          transition: all 0.3s ease;
+          box-shadow: 0 0 10px rgba(11, 127, 242, 0.5);
+        }
+
+        .create-post-btn:hover {
+          background-color: #4194f2;
+          transform: scale(1.05);
+          box-shadow: 0 0 20px rgba(11, 127, 242, 0.7);
+        }
+
+        .create-post {
+          max-width: 650px;
+          width: 90%;
+          margin: 40px auto;
+          padding: 30px;
+          background: rgba(255, 255, 255, 0.08);
+          border-radius: 20px;
+          backdrop-filter: blur(12px);
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+          animation: fadeIn 0.6s ease;
+        }
+
+        .create-post h2 {
+          text-align: center;
+          margin-bottom: 25px;
+          color: #90caf9;
+          font-size: 1.8rem;
+          letter-spacing: 1px;
+        }
+
+        .error-message {
+          background: rgba(229, 9, 20, 0.2);
+          border: 1px solid #e50914;
+          color: #ff6b6b;
+          padding: 10px;
+          border-radius: 8px;
+          margin-bottom: 15px;
+          font-size: 14px;
+          text-align: center;
+        }
+
+        form input[type="text"],
+        form select,
+        form textarea {
+          width: 100%;
+          padding: 12px 15px;
+          margin-bottom: 15px;
+          border: none;
+          border-radius: 8px;
+          font-size: 1rem;
+          background: rgba(255, 255, 255, 0.1);
+          color: #fff;
+          outline: none;
+          transition: background 0.3s ease;
+          box-sizing: border-box;
+          font-family: 'Poppins', sans-serif;
+        }
+
+        form input::placeholder,
+        form textarea::placeholder {
+          color: #bbb;
+        }
+
+        form input:focus,
+        form textarea:focus,
+        form select:focus {
+          background: rgba(255, 255, 255, 0.2);
+          box-shadow: 0 0 8px rgba(11, 127, 242, 0.5);
+        }
+
+        form select {
+          cursor: pointer;
+        }
+
+        form select option {
+          background: #203a43;
+          color: #fff;
+        }
+
+        .rating-label {
+          font-size: 1rem;
+          margin-bottom: 8px;
+          display: block;
+          color: #e0f7fa;
+          font-weight: 500;
+        }
+
+        .slider {
+          width: 100%;
+          accent-color: #0b7ff2;
+          margin-bottom: 20px;
+          cursor: pointer;
+        }
+
+        button[type="submit"] {
+          background-color: #0b7ff2;
+          color: #fff;
+          border: none;
+          padding: 12px 22px;
+          font-size: 1rem;
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: 600;
+          transition: all 0.3s ease;
+          display: block;
+          margin: 0 auto;
+          width: 100%;
+        }
+
+        button[type="submit"]:hover:not(:disabled) {
+          background-color: #4194f2;
+          transform: scale(1.05);
+          box-shadow: 0 0 15px rgba(11, 127, 242, 0.7);
+        }
+
+        button[type="submit"]:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @media (max-width: 600px) {
+          .create-post {
+            padding: 20px;
+          }
+
+          .create-post-btn {
+            margin-top: 20px;
+            font-size: 1rem;
+            padding: 12px 20px;
+          }
+        }
+      `}</style>
     </div>
   );
 }
-
-const styles = {
-  container: { maxWidth: '600px', margin: '2rem auto', padding: '2rem', background: '#fff', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' },
-  title: { fontSize: '2rem', marginBottom: '1.5rem', textAlign: 'center', color: '#333' },
-  form: { display: 'flex', flexDirection: 'column' },
-  input: { margin: '0.5rem 0', padding: '0.8rem', fontSize: '1rem', border: '1px solid #ddd', borderRadius: '8px' },
-  textarea: { margin: '0.5rem 0', padding: '0.8rem', fontSize: '1rem', minHeight: '100px', border: '1px solid #ddd', borderRadius: '8px' },
-  label: { margin: '0.5rem 0', fontWeight: '500' },
-  slider: { width: '100%', marginTop: '0.5rem' },
-  button: { marginTop: '1rem', padding: '0.8rem', background: '#28a745', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '1rem' },
-};
