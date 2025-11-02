@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authAPI } from '@/services/api';
 
 export default function Login() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -13,44 +15,33 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    e.stopPropagation(); // Stop all event propagation
+  const handleLogin = async () => {
     setError('');
 
     if (!formData.email || !formData.password) {
       setError('Please enter both email and password!');
-      return false;
+      return;
     }
 
     setLoading(true);
 
     try {
       const response = await authAPI.login(formData);
-      console.log('✅ Login successful!');
       
-      // Store credentials
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('loggedInUser', formData.email);
       
-      // Show success screen
       setLoginSuccess(true);
-      setLoading(false);
       
-      console.log('Redirecting in 2 seconds...');
-      
-      // Redirect after showing success
+      // Use Next.js router - doesn't cause page reload
       setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 2000);
+        router.push('/dashboard');
+      }, 1500);
       
     } catch (err) {
-      console.error('❌ Login error:', err);
       setError(err.response?.data?.message || 'Login failed. Please try again.');
       setLoading(false);
     }
-    
-    return false; // Prevent any default behavior
   };
 
   // Success screen
@@ -61,9 +52,9 @@ export default function Login() {
         <div className="login-container success-container">
           <div className="success-icon">✅</div>
           <h2 className="success-title">Login Successful!</h2>
-          <p className="tagline">Redirecting to dashboard...</p>
+          <p className="tagline">Taking you to dashboard...</p>
           <Link href="/dashboard">
-            <button className="dashboard-btn">Go to Dashboard Now</button>
+            <button className="dashboard-btn">Go to Dashboard</button>
           </Link>
         </div>
 
@@ -98,13 +89,11 @@ export default function Login() {
             text-align: center;
             width: 300px;
             box-shadow: 0 0 30px rgba(76, 175, 80, 0.5);
-            animation: successPulse 1s ease-in-out;
           }
 
           .success-icon {
             font-size: 72px;
             margin-bottom: 20px;
-            animation: bounce 0.6s ease-in-out;
           }
 
           .success-title {
@@ -131,23 +120,11 @@ export default function Login() {
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
           }
 
           .dashboard-btn:hover {
             background-color: #66bb6a;
             transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
-          }
-
-          @keyframes successPulse {
-            0% { transform: scale(0.9); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-          }
-
-          @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
           }
         `}</style>
       </div>
@@ -166,27 +143,27 @@ export default function Login() {
 
         {error && <div className="error-message">{error}</div>}
 
-        <form onSubmit={handleSubmit} method="dialog">
+        <div>
           <input
             type="email"
             placeholder="Email"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            required
             disabled={loading}
+            onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
           />
           <input
             type="password"
             placeholder="Password"
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            required
             disabled={loading}
+            onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
           />
-          <button type="submit" disabled={loading}>
+          <button onClick={handleLogin} disabled={loading}>
             {loading ? 'Logging in...' : 'Login'}
           </button>
-        </form>
+        </div>
 
         <p className="signup-link">
           Don&apos;t have an account? <a href="/register">Sign up</a>
