@@ -11,51 +11,62 @@ export default function Login() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation(); // Stop all event propagation
     setError('');
 
     if (!formData.email || !formData.password) {
       setError('Please enter both email and password!');
-      return;
+      return false;
     }
 
     setLoading(true);
 
     try {
       const response = await authAPI.login(formData);
+      console.log('✅ Login successful!');
       
+      // Store credentials
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('loggedInUser', formData.email);
       
-      setSuccess(true);
+      // Show success screen
+      setLoginSuccess(true);
       setLoading(false);
       
-      // Also try auto-redirect
+      console.log('Redirecting in 2 seconds...');
+      
+      // Redirect after showing success
       setTimeout(() => {
         window.location.href = '/dashboard';
-      }, 1000);
+      }, 2000);
       
     } catch (err) {
+      console.error('❌ Login error:', err);
       setError(err.response?.data?.message || 'Login failed. Please try again.');
       setLoading(false);
     }
+    
+    return false; // Prevent any default behavior
   };
 
-  if (success) {
+  // Success screen
+  if (loginSuccess) {
     return (
       <div className="login-page">
         <div className="overlay"></div>
-        <div className="login-container">
+        <div className="login-container success-container">
           <div className="success-icon">✅</div>
-          <h2>Login Successful!</h2>
+          <h2 className="success-title">Login Successful!</h2>
           <p className="tagline">Redirecting to dashboard...</p>
           <Link href="/dashboard">
-            <button className="dashboard-btn">Go to Dashboard</button>
+            <button className="dashboard-btn">Go to Dashboard Now</button>
           </Link>
         </div>
+
         <style jsx>{`
           @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
@@ -78,7 +89,7 @@ export default function Login() {
             z-index: 0;
           }
 
-          .login-container {
+          .success-container {
             position: relative;
             z-index: 1;
             background: rgb(38, 37, 37);
@@ -86,18 +97,20 @@ export default function Login() {
             border-radius: 25px;
             text-align: center;
             width: 300px;
-            box-shadow: 0 0 30px rgba(245, 166, 35, 0.3);
+            box-shadow: 0 0 30px rgba(76, 175, 80, 0.5);
+            animation: successPulse 1s ease-in-out;
           }
 
           .success-icon {
-            font-size: 64px;
+            font-size: 72px;
             margin-bottom: 20px;
+            animation: bounce 0.6s ease-in-out;
           }
 
-          h2 {
+          .success-title {
             font-weight: 600;
             margin-bottom: 10px;
-            color: #4caf50;
+            color: #4caf50 !important;
             font-size: 24px;
           }
 
@@ -124,12 +137,24 @@ export default function Login() {
           .dashboard-btn:hover {
             background-color: #66bb6a;
             transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+          }
+
+          @keyframes successPulse {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+          }
+
+          @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
           }
         `}</style>
       </div>
     );
   }
 
+  // Login form
   return (
     <div className="login-page">
       <div className="overlay"></div>
@@ -141,13 +166,14 @@ export default function Login() {
 
         {error && <div className="error-message">{error}</div>}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} method="dialog">
           <input
             type="email"
             placeholder="Email"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             required
+            disabled={loading}
           />
           <input
             type="password"
@@ -155,6 +181,7 @@ export default function Login() {
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             required
+            disabled={loading}
           />
           <button type="submit" disabled={loading}>
             {loading ? 'Logging in...' : 'Login'}
@@ -261,6 +288,10 @@ export default function Login() {
         input:focus {
           border-color: #e50914;
           box-shadow: 0 0 10px #e50914;
+        }
+
+        input:disabled {
+          opacity: 0.6;
         }
 
         button {
