@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { postAPI, commentAPI } from '@/services/api';
 
@@ -13,24 +13,7 @@ export default function PostDetail() {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        setCurrentUser({ userId: payload.userId });
-      } catch (err) {
-        console.error('Error parsing token:', err);
-      }
-    }
-
-    if (params?.id) {
-      fetchPost();
-      fetchComments();
-    }
-  }, [params?.id]);
-
-  const fetchPost = async () => {
+  const fetchPost = useCallback(async () => {
     try {
       const response = await postAPI.getById(params.id);
       setPost(response.data);
@@ -39,16 +22,33 @@ export default function PostDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       const response = await commentAPI.getByPostId(params.id);
       setComments(response.data);
     } catch (error) {
       console.error('Error fetching comments:', error);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setCurrentUser({ userId: payload.userId });
+      } catch (error) {
+        console.error('Error parsing token:', error);
+      }
+    }
+
+    if (params?.id) {
+      fetchPost();
+      fetchComments();
+    }
+  }, [params?.id, fetchPost, fetchComments]);
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
@@ -72,6 +72,7 @@ export default function PostDetail() {
         await postAPI.delete(params.id);
         router.push('/dashboard');
       } catch (error) {
+        console.error('Error deleting post:', error);
         alert('Failed to delete');
       }
     }
@@ -191,7 +192,7 @@ export default function PostDetail() {
               <div className="mb-8 bg-gradient-to-r from-amber-50 to-yellow-50 p-6 rounded-2xl border-2 border-amber-200">
                 <div className="text-sm font-semibold text-gray-600 mb-2">RATING</div>
                 <div className="text-4xl">
-                  {Array.from({length: post.rating}, (_, i) => '⭐').join('')}
+                  {'⭐'.repeat(post.rating)}
                 </div>
               </div>
             )}
@@ -213,7 +214,7 @@ export default function PostDetail() {
                   <span>💬</span> Review
                 </h2>
                 <p className="text-gray-800 text-lg leading-relaxed italic">
-                  "{post.review}"
+                  &ldquo;{post.review}&rdquo;
                 </p>
               </div>
             )}
