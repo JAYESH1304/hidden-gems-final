@@ -1,4 +1,5 @@
 'use client';
+
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { postAPI, commentAPI } from '@/services/api';
@@ -23,17 +24,19 @@ export default function PostDetail() {
       }
     }
 
-    fetchPost();
-    fetchComments();
-  }, [params.id]);
+    if (params?.id) {
+      fetchPost();
+      fetchComments();
+    }
+  }, [params?.id]);
 
   const fetchPost = async () => {
     try {
       const response = await postAPI.getById(params.id);
       setPost(response.data);
-      setLoading(false);
     } catch (error) {
       console.error('Error fetching post:', error);
+    } finally {
       setLoading(false);
     }
   };
@@ -57,37 +60,34 @@ export default function PostDetail() {
       fetchComments();
     } catch (error) {
       console.error('Error posting comment:', error);
-      alert('Failed to post comment. Please try again.');
+      alert('Failed to post comment');
     }
   };
 
-  const handleEdit = () => {
-    router.push(`/edit-post/${params.id}`);
-  };
+  const handleEdit = () => router.push(`/edit-post/${params.id}`);
 
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this post?')) {
+    if (confirm('Delete this post?')) {
       try {
         await postAPI.delete(params.id);
         router.push('/dashboard');
       } catch (error) {
-        console.error('Error deleting post:', error);
-        alert('Failed to delete post');
+        alert('Failed to delete');
       }
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 flex items-center justify-center">
-        <div className="text-white text-2xl">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
+        <div className="text-white text-2xl animate-pulse">Loading...</div>
       </div>
     );
   }
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
         <div className="text-white text-2xl">Post not found</div>
       </div>
     );
@@ -96,36 +96,42 @@ export default function PostDetail() {
   const isAuthor = currentUser && post.user && currentUser.userId === post.user._id;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 py-12 px-4">
-      <div className="container mx-auto max-w-4xl">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto space-y-8">
+        
         {/* Main Post Card */}
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden mb-8">
-          {/* Header Section */}
-          <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-8 text-white">
-            <div className="flex justify-between items-start">
+        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden transform transition hover:shadow-3xl">
+          
+          {/* Header */}
+          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-10">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
               <div className="flex-1">
-                <h1 className="text-4xl md:text-5xl font-bold mb-4">{post.title}</h1>
-                <div className="flex items-center space-x-4 text-sm">
-                  <span className="bg-white bg-opacity-20 px-3 py-1 rounded-full capitalize">
-                    {post.type}
+                <h1 className="text-4xl sm:text-5xl font-extrabold text-white mb-4 leading-tight">
+                  {post.title}
+                </h1>
+                <div className="flex flex-wrap gap-3">
+                  <span className="inline-block bg-white bg-opacity-25 backdrop-blur-sm px-4 py-2 rounded-full text-white font-medium capitalize text-sm">
+                    🎬 {post.type}
                   </span>
                   {post.user?.username && (
-                    <span>by {post.user.username}</span>
+                    <span className="inline-block bg-white bg-opacity-25 backdrop-blur-sm px-4 py-2 rounded-full text-white font-medium text-sm">
+                      👤 {post.user.username}
+                    </span>
                   )}
                 </div>
               </div>
               
               {isAuthor && (
-                <div className="flex space-x-2">
+                <div className="flex gap-3">
                   <button
                     onClick={handleEdit}
-                    className="bg-white text-purple-600 px-4 py-2 rounded-lg hover:bg-purple-50 transition font-medium"
+                    className="bg-white text-indigo-600 px-6 py-3 rounded-xl font-semibold hover:bg-indigo-50 transition transform hover:scale-105 shadow-lg"
                   >
                     Edit
                   </button>
                   <button
                     onClick={handleDelete}
-                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition font-medium"
+                    className="bg-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-600 transition transform hover:scale-105 shadow-lg"
                   >
                     Delete
                   </button>
@@ -134,109 +140,138 @@ export default function PostDetail() {
             </div>
           </div>
 
-          {/* Details Grid */}
-          <div className="p-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* Content */}
+          <div className="p-8 sm:p-10">
+            
+            {/* Info Grid */}
+            <div className="grid sm:grid-cols-2 gap-6 mb-10">
               {post.genre && (
-                <div className="flex items-start">
-                  <span className="font-bold text-gray-700 w-32">Genre:</span>
-                  <span className="text-gray-600">{post.genre}</span>
+                <div className="flex items-center gap-3 bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-xl">
+                  <span className="text-2xl">🎭</span>
+                  <div>
+                    <div className="text-xs font-semibold text-gray-500 uppercase">Genre</div>
+                    <div className="text-lg font-bold text-gray-800">{post.genre}</div>
+                  </div>
                 </div>
               )}
               
               {post.country && (
-                <div className="flex items-start">
-                  <span className="font-bold text-gray-700 w-32">Country:</span>
-                  <span className="text-gray-600">{post.country}</span>
+                <div className="flex items-center gap-3 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl">
+                  <span className="text-2xl">🌍</span>
+                  <div>
+                    <div className="text-xs font-semibold text-gray-500 uppercase">Country</div>
+                    <div className="text-lg font-bold text-gray-800">{post.country}</div>
+                  </div>
                 </div>
               )}
               
               {post.language && (
-                <div className="flex items-start">
-                  <span className="font-bold text-gray-700 w-32">Language:</span>
-                  <span className="text-gray-600">{post.language}</span>
+                <div className="flex items-center gap-3 bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl">
+                  <span className="text-2xl">🗣️</span>
+                  <div>
+                    <div className="text-xs font-semibold text-gray-500 uppercase">Language</div>
+                    <div className="text-lg font-bold text-gray-800">{post.language}</div>
+                  </div>
                 </div>
               )}
               
               {post.year && (
-                <div className="flex items-start">
-                  <span className="font-bold text-gray-700 w-32">Year:</span>
-                  <span className="text-gray-600">{post.year}</span>
-                </div>
-              )}
-              
-              {post.rating > 0 && (
-                <div className="flex items-start md:col-span-2">
-                  <span className="font-bold text-gray-700 w-32">Rating:</span>
-                  <span className="text-2xl">{'⭐'.repeat(post.rating)}</span>
+                <div className="flex items-center gap-3 bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-xl">
+                  <span className="text-2xl">📅</span>
+                  <div>
+                    <div className="text-xs font-semibold text-gray-500 uppercase">Year</div>
+                    <div className="text-lg font-bold text-gray-800">{post.year}</div>
+                  </div>
                 </div>
               )}
             </div>
 
+            {/* Rating */}
+            {post.rating > 0 && (
+              <div className="mb-8 bg-gradient-to-r from-amber-50 to-yellow-50 p-6 rounded-2xl border-2 border-amber-200">
+                <div className="text-sm font-semibold text-gray-600 mb-2">RATING</div>
+                <div className="text-4xl">
+                  {Array.from({length: post.rating}, (_, i) => '⭐').join('')}
+                </div>
+              </div>
+            )}
+
             {/* Description */}
             <div className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Description</h2>
-              <p className="text-gray-700 text-lg leading-relaxed">{post.description}</p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span>📝</span> Description
+              </h2>
+              <p className="text-gray-700 text-lg leading-relaxed bg-gray-50 p-6 rounded-xl">
+                {post.description}
+              </p>
             </div>
 
             {/* Review */}
             {post.review && (
-              <div className="bg-purple-50 p-6 rounded-xl">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Review</h2>
-                <p className="text-gray-700 text-lg leading-relaxed">{post.review}</p>
+              <div className="bg-gradient-to-br from-purple-100 to-pink-100 p-8 rounded-2xl border-2 border-purple-200">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <span>💬</span> Review
+                </h2>
+                <p className="text-gray-800 text-lg leading-relaxed italic">
+                  "{post.review}"
+                </p>
               </div>
             )}
           </div>
         </div>
 
         {/* Comments Section */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6">Comments</h2>
+        <div className="bg-white rounded-3xl shadow-2xl p-8 sm:p-10">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+            <span>💭</span> Comments
+          </h2>
 
           {comments.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">
-              No comments yet. Be the first to comment!
-            </p>
+            <div className="text-center py-12 bg-gray-50 rounded-2xl">
+              <span className="text-6xl mb-4 block">🤔</span>
+              <p className="text-gray-500 text-lg">No comments yet. Be the first to comment!</p>
+            </div>
           ) : (
             <div className="space-y-4 mb-8">
               {comments.map((comment) => (
                 <div
                   key={comment._id}
-                  className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-xl border-l-4 border-purple-500"
+                  className="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 p-6 rounded-2xl border-l-4 border-indigo-500 transform transition hover:scale-[1.02] hover:shadow-lg"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <span className="font-bold text-purple-700">
+                    <span className="font-bold text-indigo-700 flex items-center gap-2">
+                      <span>👤</span>
                       {comment.user?.username || 'Anonymous'}
                     </span>
                     <span className="text-sm text-gray-500">
                       {new Date(comment.createdAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
                         month: 'short',
                         day: 'numeric',
+                        year: 'numeric'
                       })}
                     </span>
                   </div>
-                  <p className="text-gray-700 leading-relaxed">{comment.content}</p>
+                  <p className="text-gray-700 leading-relaxed text-lg">{comment.content}</p>
                 </div>
               ))}
             </div>
           )}
 
           {/* Comment Form */}
-          <form onSubmit={handleCommentSubmit} className="space-y-4">
+          <form onSubmit={handleCommentSubmit} className="space-y-4 mt-8">
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Write a comment..."
-              className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition resize-none"
+              className="w-full px-6 py-4 border-2 border-gray-200 rounded-2xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-200 outline-none transition resize-none text-lg"
               rows="4"
               required
             />
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-xl hover:from-purple-700 hover:to-blue-700 transition font-bold text-lg shadow-lg"
+              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-5 rounded-2xl font-bold text-lg shadow-xl hover:from-indigo-700 hover:to-purple-700 transition transform hover:scale-[1.02] active:scale-[0.98]"
             >
-              Post Comment
+              Post Comment 💬
             </button>
           </form>
         </div>
