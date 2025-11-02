@@ -32,12 +32,11 @@ export default function Login() {
       localStorage.setItem('loggedInUser', formData.email);
       
       setLoginSuccess(true);
-      setLoading(false);
       
-      // Use Next.js router - doesn't cause page reload
-      // setTimeout(() => {
-      //   router.push('/dashboard');
-      // }, 1500);
+      // Auto-redirect to dashboard after showing success
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 1000);
       
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');
@@ -53,9 +52,9 @@ export default function Login() {
         <div className="login-container success-container">
           <div className="success-icon">✅</div>
           <h2 className="success-title">Login Successful!</h2>
-          <p className="tagline">Taking you to dashboard...</p>
+          <p className="tagline">Redirecting to dashboard...</p>
           <Link href="/dashboard">
-            <button className="dashboard-btn">Go to Dashboard</button>
+            <button className="dashboard-btn">Go Now →</button>
           </Link>
         </div>
 
@@ -90,11 +89,13 @@ export default function Login() {
             text-align: center;
             width: 300px;
             box-shadow: 0 0 30px rgba(76, 175, 80, 0.5);
+            animation: successPulse 0.6s ease;
           }
 
           .success-icon {
             font-size: 72px;
             margin-bottom: 20px;
+            animation: bounce 0.6s ease;
           }
 
           .success-title {
@@ -126,6 +127,16 @@ export default function Login() {
           .dashboard-btn:hover {
             background-color: #66bb6a;
             transform: scale(1.05);
+          }
+
+          @keyframes successPulse {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+          }
+
+          @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
           }
         `}</style>
       </div>
