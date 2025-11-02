@@ -32,11 +32,12 @@ export default function Login() {
       localStorage.setItem('loggedInUser', formData.email);
       
       setLoginSuccess(true);
+      setLoading(false);
       
       // Use Next.js router - doesn't cause page reload
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 1500);
+      // setTimeout(() => {
+      //   router.push('/dashboard');
+      // }, 1500);
       
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');
